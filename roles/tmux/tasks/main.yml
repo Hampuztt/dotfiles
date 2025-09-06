@@ -1,0 +1,29 @@
+---
+# Install tmux with hampuz config
+- name: Install tmux
+  ansible.builtin.apt:
+    name: tmux
+    state: present
+    update_cache: true
+  become: true
+
+- name: Make sure tmux plugin directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.tmux/plugins"
+    state: directory
+    mode: "0755"
+
+- name: Clone TPM (tmux plugin manager)
+  ansible.builtin.git:
+    repo: https://github.com/tmux-plugins/tpm.git
+    dest: "{{ ansible_env.HOME }}/.tmux/plugins/tpm"
+    version: master
+    update: true
+
+- name: Download hampuz tmux.conf
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/Hampuztt/tmux/master/tmux.conf
+    dest: "{{ ansible_env.HOME }}/.tmux.conf"
+    mode: "0644"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"

@@ -1,0 +1,3 @@
+---
+# defaults file for install_ros2
+big_var: "hello"

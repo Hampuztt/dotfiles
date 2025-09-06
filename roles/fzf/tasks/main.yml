@@ -1,0 +1,26 @@
+---
+# tasks file for fzf
+- name: Install fzf
+  ansible.builtin.apt:
+    name: fzf
+    state: present
+    force_apt_get: true
+  become: true
+
+- name: Install fzf completions
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: "[ -f /usr/share/bash-completion/completions/fzf ] && source /usr/share/bash-completion/completions/fzf"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: "0644"
+    create: true
+
+- name: Install fzf keybindings
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: "[ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && source /usr/share/doc/fzf/examples/key-bindings.bash"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: "0644"
+    create: true

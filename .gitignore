@@ -2,6 +2,9 @@
 __pycache__/
 *.py[codz]
 *$py.class
+.ansible
+.vscode
+.env
 
 # C extensions
 *.so

@@ -1,0 +1,53 @@
+---
+- name: Install prereq deb packages
+  ansible.builtin.apt:
+    update_cache: true
+    name:
+      - build-essential
+      - curl
+      - file
+      - git
+      - procps
+    state: present
+  become: true
+
+- name: Check if Homebrew is installed
+  ansible.builtin.stat:
+    path: /home/linuxbrew/.linuxbrew/bin/brew
+  register: brew_check
+
+- name: Temporarily allow passwordless sudo and clean up {{ brew_check }}
+  when: not brew_check.stat.exists
+  block:
+    - name: Allow passwordless sudo for user
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/ansible_temp_sudo
+        content: "{{ ansible_user_id }} ALL=(ALL) NOPASSWD:ALL"
+        owner: root
+        group: root
+        mode: "0440"
+      become: true
+
+    - name: Run Homebrew install script via script module
+      ansible.builtin.script: "{{ role_path }}/files/install_homebrew.sh"
+      environment:
+        NONINTERACTIVE: "1"
+        # CI: "1"
+      become_user: "{{ ansible_user_id }}"
+      become: true
+  always:
+    - name: Remove temporary sudo rule
+      ansible.builtin.file:
+        path: /etc/sudoers.d/ansible_temp_sudo
+        state: absent
+      become: true
+
+- name: Ensure Homebrew is in PATH for user '{{ ansible_user_id }}'
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    line: 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+    create: true
+    state: present
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: "0644"

@@ -1,0 +1,87 @@
+---
+# tasks file for install_ros2
+- name: Install locales
+  ansible.builtin.apt:
+    name: locales
+    update_cache: true
+  become: true
+
+- name: Make sure en_US.UTF-8 locale is generated
+  community.general.locale_gen:
+    name: en_US.UTF-8
+    state: present
+  register: locale_check
+  become: true
+
+- name: Set system locale to en_US.UTF-8
+  ansible.builtin.script: "{{ role_path }}/files/set_locale.sh"
+  become: true
+  changed_when: locale_check.changed
+
+- name: Install software-properties-common and curl
+  ansible.builtin.apt:
+    name:
+      - software-properties-common
+      - curl
+    update_cache: true
+  become: true
+
+- name: Enable universe repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_lsb.codename }} main universe"
+    state: present
+    filename: universe
+  become: true
+
+- name: Get latest ros-apt-source release metadata
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest
+    return_content: true
+  register: release_data
+
+- name: Extract release tag version
+  ansible.builtin.set_fact:
+    ros_apt_version: "{{ release_data.json.tag_name }}"
+
+- name: Build .deb package URL
+  ansible.builtin.set_fact:
+    ros_apt_deb_url: >-
+      https://github.com/ros-infrastructure/ros-apt-source/releases/download/{{ ros_apt_version }}/ros2-apt-source_{{ ros_apt_version }}.{{ ansible_lsb.codename }}_all.deb
+
+
+- name: Download ros2-apt-source .deb
+  ansible.builtin.get_url:
+    url: "{{ ros_apt_deb_url }}"
+    dest: /tmp/ros2-apt-source.deb
+    mode: "0755"
+  become: true
+
+- name: Install ros2-apt-source .deb
+  ansible.builtin.apt:
+    deb: /tmp/ros2-apt-source.deb
+  become: true
+
+- name: Add ROS apt key
+  ansible.builtin.apt_key:
+    url: https://raw.githubusercontent.com/ros/rosdistro/master/ros.key
+    state: present
+  become: true
+
+- name: Update apt cache after adding ROS source
+  ansible.builtin.apt:
+    upgrade: full
+    update_cache: true
+  become: true
+
+- name: Install ros-humble-desktop (this will take a few minutes)
+  ansible.builtin.apt:
+    name: ros-humble-desktop
+  become: true
+
+- name: Add ROS setup and aliases to .bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    marker: "# {mark} EUFS & ROS settings"
+    block: |
+      source /opt/ros/humble/setup.bash
+      export EUFS_MASTER="{{ ansible_env.HOME }}/liu_workspace/src"
