@@ -64,6 +64,18 @@
     block: "{{ lookup('file', role_path ~ '/files/.bashrc.dev') }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK: bashrc.dev"
 
+- name: Set HISTSIZE
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^HISTSIZE='
+    line: 'HISTSIZE=5000'
+
+- name: Set HISTFILESIZE
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    regexp: '^HISTFILESIZE='
+    line: 'HISTFILESIZE=10000'
+
 - name: Register Alacritty as x-terminal-emulator
   community.general.alternatives:
     name: x-terminal-emulator
