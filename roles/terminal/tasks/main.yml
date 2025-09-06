@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/terminal
+#
+# tasks file for alacritty (Linux + Cargo, no Homebrew)
+- name: Ensure build dependencies are present
+  ansible.builtin.apt:
+    name:
+      - curl
+      - build-essential
+      - cmake
+      - pkg-config
+      - libfreetype6-dev
+      - libfontconfig1-dev
+      - libxcb-xfixes0-dev
+      - libxkbcommon-dev
+      - python3
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install Rust toolchain with rustup
+  ansible.builtin.shell: |
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  args:
+    creates: "{{ ansible_env.HOME }}/.cargo/bin/rustc"
+
+- name: Install Alacritty with cargo
+  ansible.builtin.command: "{{ ansible_env.HOME }}/.cargo/bin/cargo install alacritty"
+  args:
+    creates: "{{ ansible_env.HOME }}/.cargo/bin/alacritty"
+  environment:
+    PATH: "{{ ansible_env.HOME }}/.cargo/bin:{{ ansible_env.PATH }}"
+
+- name: Install alacritty system-wide from user build
+  ansible.builtin.copy:
+    src: "{{ ansible_env.HOME }}/.cargo/bin/alacritty"
+    dest: /usr/local/bin/alacritty
+    mode: "0755"
+  become: true
+
+- name: Ensure alacritty config directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/alacritty/themes"
+    state: directory
+    mode: "0755"
+
+- name: Clone alacritty theme repository
+  ansible.builtin.git:
+    repo: "https://github.com/alacritty/alacritty-theme"
+    dest: "{{ ansible_env.HOME }}/.config/alacritty/themes"
+    version: master
+    update: true
+
+- name: Add alacritty config
+  ansible.builtin.copy:
+    src: alacritty.toml
+    dest: "{{ ansible_env.HOME }}/.config/alacritty/alacritty.toml"
+    mode: "0644"
+
+- name: Insert .bashrc.dev content into .bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_env.HOME }}/.bashrc"
+    block: "{{ lookup('file', role_path ~ '/files/.bashrc.dev') }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: bashrc.dev"
+
+- name: Register Alacritty as x-terminal-emulator
+  community.general.alternatives:
+    name: x-terminal-emulator
+    link: /usr/bin/x-terminal-emulator
+    path: /usr/local/bin/alacritty
+    priority: 50
+    state: present
+  become: true
+
+- name: Select Alacritty as default terminal
+  community.general.alternatives:
+    name: x-terminal-emulator
+    path: /usr/local/bin/alacritty
+    state: selected
+  become: true

@@ -1,0 +1,17 @@
+screenstayon() {
+    xset s off && xset -dpms
+}
+
+disable_sec() {
+        echo "Disabling ptrace_scope temporarily (sudo required)..."
+        echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope > /dev/null
+        echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid
+        echo 0 | sudo tee /proc/sys/kernel/kptr_restrict
+        echo 0 | sudo tee /proc/sys/kernel/nmi_watchdog
+        echo 0 | sudo tee /proc/sys/dev/i915/perf_stream_paranoid
+}
+
+
+alias nano=vim
+alias mux=tmuxinator
+export EDITOR=nvim

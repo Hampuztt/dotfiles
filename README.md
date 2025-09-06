@@ -12,10 +12,12 @@ Run the following script to install everything.
 
 
 ```bash
+sudo apt update
+sudo apt install -y curl git
 git clone https://github.com/hampuztt/dotfiles.git
 cd dotfiles
-chmod +x run.sh
-./run.sh
+chmod +x install.sh
+./install.sh
 ```
 
 
@@ -32,3 +34,5 @@ The playbook with by default install the following
 - `tmux`  
 - `neovim` (installed via Homebrew)  
 - `nerdfonts` (for Neovim and terminal usage)  
+- `alacritty`
+- `cargo`

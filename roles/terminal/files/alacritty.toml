@@ -1,0 +1,50 @@
+# Extremely good example config 
+# https://gist.github.com/iuliandita/a4c1dd0e25460af91ebeeef51e0ef7ec
+
+[general]
+live_config_reload = true
+import = [
+    "~/.config/alacritty/themes/themes/iterm.toml"
+]
+
+[window]
+decorations = "full"
+
+dynamic_padding = false
+opacity = 0.9
+
+[window.dimensions]
+columns = 80
+lines = 40
+
+
+
+[window.padding]
+x = 10
+y = 5
+
+[font]
+size = 16.0
+
+[font.bold]
+family = "JetBrainsMono Nerd Font"
+style = "Heavy"
+
+[font.bold_italic]
+family = "JetBrainsMono Nerd Font"
+style = "Heavy Italic"
+
+[font.italic]
+family = "JetBrainsMono Nerd Font"
+style = "Medium Italic"
+
+[font.normal]
+family = "JetBrainsMono Nerd Font"
+style = "Medium"
+
+[keyboard]
+bindings = [
+{ key = "V",        mods = "Control", action = "Paste" },
+{ key = "L",        mods = "Control|Shift",       action = "ClearLogNotice" },
+
+]
