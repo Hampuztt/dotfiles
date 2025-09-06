@@ -63,6 +63,7 @@
     path: "{{ ansible_env.HOME }}/.bashrc"
     block: "{{ lookup('file', role_path ~ '/files/.bashrc.dev') }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK: bashrc.dev"
+    insertbefore: BOF
 
 - name: Set HISTSIZE
   ansible.builtin.lineinfile:
