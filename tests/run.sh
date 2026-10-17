@@ -44,7 +44,7 @@ for distro in "${distros[@]}"; do
   docker build -q -t "dotfiles-test-$distro" --build-arg BASE="$image" tests >/dev/null
 
   # Install twice (the second run must succeed and change nothing), then check everything.
-  if docker run --rm --init --name "dotfiles-test-$distro" -v "$REPO:/home/tester/dotfiles:ro" \
+  if docker run --rm --init --name "dotfiles-test-$distro" -e DOTFILES_TEST_CONTAINER=1 -v "$REPO:/home/tester/dotfiles:ro" \
     "${nvim_mount[@]}" "dotfiles-test-$distro" bash -c '
       set -e
       if [ -d /nvim-local ]; then mkdir -p ~/.config && cp -a /nvim-local ~/.config/nvim; fi

@@ -31,8 +31,10 @@ for link in "${LINKS[@]}"; do
   expect "~/$dest -> $src" "$(readlink "$HOME/$dest")" "$DOTFILES/$src"
 done
 check "~/.bashrc.local exists and only you can read it" test "$(stat -c %a "$HOME/.bashrc.local")" = 600
-backups=$(find "$HOME" -maxdepth 4 -name '*.backup-*' -not -path '*/.local/share/*' | wc -l)
-expect "only the original ~/.bashrc was backed up (second install changed nothing)" "$backups" 1
+if [ "${DOTFILES_TEST_CONTAINER:-}" = 1 ]; then # (on a real machine, your own files get backed up too)
+  backups=$(find "$HOME" -maxdepth 4 -name '*.backup-*' -not -path '*/.local/share/*' | wc -l)
+  expect "only the original ~/.bashrc was backed up (second install changed nothing)" "$backups" 1
+fi
 
 echo "Tools from mise"
 check "every tool in mise/config.toml is installed" test -z "$(mise ls --missing 2>/dev/null)"
@@ -53,6 +55,11 @@ check "JetBrainsMono Nerd Font is installed" sh -c 'fc-list | grep -qi "JetBrain
 launcher="$HOME/.local/share/applications/Alacritty.desktop"
 check "Alacritty launcher exists" test -f "$launcher"
 check "the launcher's command runs" "$(sed -n 's/^Exec=//p' "$launcher")" --version
+# Desktop shortcuts don't see mise: `alacritty` must also work with a plain PATH
+check "alacritty runs without mise on PATH" env PATH="$HOME/.local/bin:/usr/bin:/bin" alacritty --version
+if [ -e /etc/alternatives/x-terminal-emulator ]; then
+  check "x-terminal-emulator starts Alacritty" sh -c 'x-terminal-emulator --version | grep -q alacritty'
+fi
 
 echo "tmux"
 for plugin in tpm tmux-yank vim-tmux-navigator tmux-resurrect tmux-continuum tmux-fingers; do

@@ -107,7 +107,21 @@ install_font() {
 # mise doesn't add Alacritty to your app menu, so add a launcher (and make it the default terminal).
 setup_alacritty() {
   step "Alacritty launcher"
-  local alacritty="$HOME/.local/share/mise/shims/alacritty"
+  # A small `alacritty` command in ~/.local/bin that starts the Alacritty mise installed. Desktop
+  # shortcuts, the app menu and x-terminal-emulator use it: they don't get mise's PATH, and mise's
+  # own shims only work when they're called by their exact name.
+  local alacritty="$HOME/.local/bin/alacritty"
+  mkdir -p "$HOME/.local/bin"
+  cat >"$alacritty" <<EOF
+#!/bin/sh
+# Created by ~/dotfiles/install.sh: starts the Alacritty installed by mise.
+bin=\$("$(command -v mise)" which alacritty 2>/dev/null) || {
+  echo "alacritty: not installed by mise (run: mise install)" >&2
+  exit 1
+}
+exec "\$bin" "\$@"
+EOF
+  chmod +x "$alacritty"
   local apps="$HOME/.local/share/applications"
   local icons="$HOME/.local/share/icons/hicolor/scalable/apps"
   mkdir -p "$apps" "$icons"
@@ -131,6 +145,8 @@ EOF
   if [ -e /etc/alternatives/x-terminal-emulator ]; then
     sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator "$alacritty" 50
     sudo update-alternatives --set x-terminal-emulator "$alacritty"
+    # (an earlier version of this script registered mise's shim, which doesn't work there)
+    sudo update-alternatives --remove x-terminal-emulator "$HOME/.local/share/mise/shims/alacritty" 2>/dev/null || true
   fi
 }
 

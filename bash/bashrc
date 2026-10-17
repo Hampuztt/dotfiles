@@ -118,16 +118,6 @@ fi
 
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 
-# Tools installed by mise: Neovim, Node, ripgrep, lazygit, ... (see ~/.config/mise/config.toml)
-if command -v mise >/dev/null; then
-    eval "$(mise activate bash)"
-fi
-
-# fzf: Ctrl-R history search, Ctrl-T file search, Alt-C cd into a folder
-if command -v fzf >/dev/null; then
-    eval "$(fzf --bash)"
-fi
-
 # Editor
 export EDITOR=nvim
 alias vim=nvim
@@ -153,4 +143,15 @@ disable_sec() {
 # Settings for this machine only, and secrets (not in git)
 if [ -f ~/.bashrc.local ]; then
     . ~/.bashrc.local
+fi
+
+# Last, so the tools mise installs come before anything ~/.bashrc.local adds to PATH.
+# Tools installed by mise: Neovim, Node, ripgrep, lazygit, ... (see ~/.config/mise/config.toml)
+if command -v mise >/dev/null; then
+    eval "$(mise activate bash)"
+fi
+
+# fzf: Ctrl-R history search, Ctrl-T file search, Alt-C cd into a folder
+if command -v fzf >/dev/null; then
+    eval "$(fzf --bash)"
 fi
