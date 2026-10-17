@@ -1,9 +1,0 @@
----
-- hosts: localhost # | virtualmachine
-  roles: 
-    - tmux
-    - homebrew
-    - neovim
-    - fzf
-    - terminal
-    # - install_ros2

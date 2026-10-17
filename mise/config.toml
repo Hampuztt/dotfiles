@@ -1,0 +1,27 @@
+# Tools that mise installs into your home folder (no sudo). Linked to ~/.config/mise/config.toml.
+#
+#   mise install            install everything listed here (install.sh does this)
+#   mise upgrade --bump     update every tool and write the new versions into this file
+#   mise ls                 what's installed
+#
+# Add a tool: find its name with `mise registry <name>`, then add a line below.
+
+[tools]
+neovim = "0.12.6"
+node = "24.22.0" # Node LTS: Mason installs many language servers with npm
+uv = "0.13.1" # Python package/project manager
+
+# Search and files
+ripgrep = "15.2.0"
+fd = "10.5.0"
+fzf = "0.74.5"
+
+# Terminal UIs
+lazygit = "0.66.2"
+lazydocker = "0.25.2"
+bottom = "0.14.9" # `btm`, system monitor
+gdu = "5.38.0" # disk usage
+
+# Alacritty has no ready-made Linux build, so mise compiles it with Rust (takes a few minutes).
+rust = "1.99.1"
+"cargo:alacritty" = "0.17.0"

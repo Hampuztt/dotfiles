@@ -1,12 +1,11 @@
-# ~/.bashrc: executed by bash(1) for non-login shells.G
+# ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
 
-
 # If not running interactively, don't do anything
 case $- in
-    *i*) ;;
-      *) return;;
+*i*) ;;
+*) return ;;
 esac
 
 # don't put duplicate lines or lines starting with space in the history.
@@ -15,10 +14,6 @@ HISTCONTROL=ignoreboth
 
 # append to the history file, don't overwrite it
 shopt -s histappend
-
-# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
-HISTSIZE=1000
-HISTFILESIZE=2000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -38,7 +33,7 @@ fi
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
-    xterm-color|*-256color) color_prompt=yes;;
+xterm-color | *-256color) color_prompt=yes ;;
 esac
 
 # uncomment for a colored prompt, if the terminal has the capability; turned
@@ -48,12 +43,12 @@ esac
 
 if [ -n "$force_color_prompt" ]; then
     if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
-	# We have color support; assume it's compliant with Ecma-48
-	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
-	# a case would tend to support setf rather than setaf.)
-	color_prompt=yes
+        # We have color support; assume it's compliant with Ecma-48
+        # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+        # a case would tend to support setf rather than setaf.)
+        color_prompt=yes
     else
-	color_prompt=
+        color_prompt=
     fi
 fi
 
@@ -66,11 +61,10 @@ unset color_prompt force_color_prompt
 
 # If this is an xterm set the title to user@host:dir
 case "$TERM" in
-xterm*|rxvt*)
+xterm* | rxvt*)
     PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
     ;;
-*)
-    ;;
+*) ;;
 esac
 
 # enable color support of ls and also add handy aliases
@@ -97,59 +91,68 @@ alias l='ls -CF'
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
-# Alias definitions.
-# You may want to put all your additions into a separate file like
-# ~/.bash_aliases, instead of adding them here directly.
-# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+# ── Your settings ─────────────────────────────────────────────────────────────
+# This file is shared by every machine and lives in a PUBLIC git repo.
+# Secrets (tokens, passwords) and settings for one machine only go in ~/.bashrc.local,
+# which is loaded at the end of this file and never committed.
+
+# History
+export HISTFILESIZE=50000               # lines kept in ~/.bash_history
+export HISTSIZE=5000                    # lines kept in memory per shell
+export HISTCONTROL=ignoredups:erasedups # no duplicate commands
+shopt -s histappend                     # append to the history file instead of overwriting it
+shopt -s cmdhist                        # save multi-line commands as one entry
 
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
-# enable programmable completion features (you don't need to enable
-# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
-# sources /etc/bash.bashrc).
+# Tab completion
 if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+        . /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+        . /etc/bash_completion
+    fi
 fi
-alias r="source ~/.bashrc"
 
-source /opt/ros/humble/setup.bash
-source ~/liu_workspace/install/setup.bash
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 
-export PATH="$HOME/.local/bin:$PATH"
-export EUFS_MASTER="$HOME/liu_workspace/src"
-export EDITOR="nvim"
+# Tools installed by mise: Neovim, Node, ripgrep, lazygit, ... (see ~/.config/mise/config.toml)
+if command -v mise >/dev/null; then
+    eval "$(mise activate bash)"
+fi
 
+# fzf: Ctrl-R history search, Ctrl-T file search, Alt-C cd into a folder
+if command -v fzf >/dev/null; then
+    eval "$(fzf --bash)"
+fi
 
+# Editor
+export EDITOR=nvim
+alias vim=nvim
+alias vi=nvim
+alias nano=nvim
 
-export PATH=/usr/local/cuda-11.8/bin${PATH:+:${PATH}}
-#systemctl status wifi-hotspot 
-# /etc/systemd/system/wifi-hotspot
-# hotspot password = driverless123
-# hotspot name driverless
+alias mux=tmuxinator
+alias r='. ~/.bashrc' # reload this file
 
-export ZED_SDK_HOME=/usr/local/zed
-export PATH=$ZED_SDK_HOME/tools:$PATH
-export LD_LIBRARY_PATH=$ZED_SDK_HOME/lib:$LD_LIBRARY_PATH
-export PATH="$HOME/.local/nvim/bin:$PATH"
-
-# Activate inputrc (matlab-like command history)
-export INPUTRC=~/.inputrc
-
-alias vim="nvim"
-alias setup_can="sudo slcand -o -c -s4 /dev/ttyCAN can0"
-
-alias cb="cd ~/liu_workspace && colcon build"
-
-mission() {
-  ros2 topic pub --once /ros_can/state eufs_msgs/msg/CanState "{as_state: 2, ami_state: $1}"
+# Keep the screen on (no screensaver / power saving) until you log out
+screenstayon() {
+    xset s off && xset -dpms
 }
 
+# Allow debuggers/profilers to attach to running processes (until reboot)
+disable_sec() {
+    echo "Disabling ptrace_scope temporarily (sudo required)..."
+    echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope >/dev/null
+    echo -1 | sudo tee /proc/sys/kernel/perf_event_paranoid
+    echo 0 | sudo tee /proc/sys/kernel/kptr_restrict
+    echo 0 | sudo tee /proc/sys/kernel/nmi_watchdog
+    echo 0 | sudo tee /proc/sys/dev/i915/perf_stream_paranoid
+}
 
-
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+# Settings for this machine only, and secrets (not in git)
+if [ -f ~/.bashrc.local ]; then
+    . ~/.bashrc.local
+fi

@@ -3,13 +3,9 @@
 
 [general]
 live_config_reload = true
-import = [
-    "~/.config/alacritty/themes/themes/iterm.toml"
-]
 
 [window]
 decorations = "full"
-
 dynamic_padding = false
 opacity = 0.9
 
@@ -48,3 +44,8 @@ bindings = [
 { key = "L",        mods = "Control|Shift",       action = "ClearLogNotice" },
 
 ]
+
+# [[keyboard.bindings]]
+# key = "Return"
+# mods = "Shift"
+# chars = "\u001B\r"
