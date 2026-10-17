@@ -48,11 +48,27 @@ you're happy.
   `LINKS` at the top of `install.sh`, then run `./install.sh`.
 - **Add a tool:** find its name with `mise registry <name>`, add a line to `mise/config.toml`,
   then run `mise install`.
-- **Update tools:** `mise upgrade --bump` installs the newest versions and writes them into
-  `config.toml`. Commit that.
+- **Update tools:** `mise upgrade` updates everything set to `latest` (and Node within 24.x).
+  Neovim is pinned on purpose: `mise upgrade --bump neovim` updates it and writes the new version
+  into `mise/config.toml`. Commit that.
 - **Add a system package:** add it to the package lists at the top of `install.sh`.
 - **Secrets and settings for one machine** (tokens, CUDA paths, ...): put them in `~/.bashrc.local`.
   `install.sh` creates it, `~/.bashrc` loads it, and it's never committed. **This repo is public.**
+
+## Testing
+
+`tests/run.sh` runs `install.sh` twice in fresh Ubuntu 24.04 and Fedora containers (Docker), then
+runs `tests/check.sh`. That script checks the links, tools, font, tmux plugins, Neovim plugins,
+and that language servers attach. Your machine isn't touched. It takes a while, because everything
+is downloaded and built from scratch.
+
+```bash
+tests/run.sh          # Ubuntu and Fedora
+tests/run.sh fedora   # one distro
+tests/check.sh        # run the checks on this machine
+```
+
+Logs end up in `tests/logs/`.
 
 ## Not installed
 

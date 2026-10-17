@@ -131,8 +131,6 @@ fi
 # Editor
 export EDITOR=nvim
 alias vim=nvim
-alias vi=nvim
-alias nano=nvim
 
 alias mux=tmuxinator
 alias r='. ~/.bashrc' # reload this file

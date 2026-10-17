@@ -46,7 +46,7 @@ install_system_packages() {
   # shellcheck disable=SC1091
   . /etc/os-release
   case " $ID ${ID_LIKE:-} " in
-    *" debian "* | *" ubuntu "*) sudo apt-get update && sudo apt-get install -y "${APT_PACKAGES[@]}" ;;
+    *" debian "* | *" ubuntu "*) sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${APT_PACKAGES[@]}" ;;
     *" fedora "* | *" rhel "*) sudo dnf install -y "${DNF_PACKAGES[@]}" ;;
     *" arch "*) sudo pacman -Syu --needed --noconfirm "${PACMAN_PACKAGES[@]}" ;;
     *)
@@ -139,6 +139,13 @@ install_tmux_plugins() {
   local tpm="$HOME/.config/tmux/plugins/tpm"
   [ -d "$tpm" ] || git clone --depth 1 https://github.com/tmux-plugins/tpm "$tpm"
   "$tpm/bin/install_plugins"
+
+  # tmux-fingers also needs its program; without it, tmux asks you to install it on first start
+  local fingers="$HOME/.config/tmux/plugins/tmux-fingers"
+  if [ -d "$fingers" ] && [ ! -x "$fingers/bin/tmux-fingers" ]; then
+    bash "$fingers/install-wizard.sh" download-binary </dev/null ||
+      info "couldn't download the tmux-fingers program; tmux will offer to install it"
+  fi
 }
 
 setup_neovim() {
@@ -149,7 +156,12 @@ setup_neovim() {
     git clone "$NVIM_CONFIG_REPO" "$HOME/.config/nvim"
   fi
   nvim --headless "+Lazy! sync" +qa
-  nvim --headless "+MasonToolsInstallSync" +qa
+  # (time limit: if Mason ever gets stuck, this script still finishes)
+  timeout 30m nvim --headless "+MasonToolsInstallSync" +qa ||
+    info "Mason tools didn't finish within 30 minutes; open Neovim and check :Mason"
+  # Build the treesitter parsers now instead of in the background on your first start
+  # (only with the nvim-treesitter version that has `install`, i.e. AstroNvim v6)
+  nvim --headless "+lua local ok, ts = pcall(require, 'nvim-treesitter') if ok and ts.install then ts.install(require('astrocore').config.treesitter.ensure_installed):wait(600000) end" +qa
 }
 
 main() {
