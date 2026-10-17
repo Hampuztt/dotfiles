@@ -15,6 +15,7 @@ NERD_FONT="JetBrainsMono" # any font name from https://github.com/ryanoasis/nerd
 LINKS=(
   "bash/bashrc              .bashrc"
   "tmux/tmux.conf           .config/tmux/tmux.conf"
+  "tmux/fingers-copy.sh     .config/tmux/fingers-copy.sh"
   "alacritty/alacritty.toml .config/alacritty/alacritty.toml"
   "mise/config.toml         .config/mise/config.toml"
 )
