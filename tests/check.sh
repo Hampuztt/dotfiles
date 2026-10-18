@@ -1,28 +1,14 @@
 #!/usr/bin/env bash
-# Checks that install.sh set everything up. Runs inside the test container (see tests/run.sh),
-# but also works on your own machine: tests/check.sh
+# Checks that install.sh set everything up, and that the features work: the Neovim config's own tests
+# (~/.config/nvim/tests/run.sh) and tmux with Neovim inside it (tests/tmux_nvim.sh). Runs inside the
+# test container (see tests/run.sh), but also works on your own machine: tests/check.sh
 # shellcheck disable=SC2088 # "~/..." in check descriptions is meant literally
 set -uo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
-failures=0
-
-pass() { printf '  \033[32mPASS\033[0m %s\n' "$*"; }
-fail() {
-  printf '  \033[31mFAIL\033[0m %s\n' "$*"
-  failures=$((failures + 1))
-}
-# check "description" command...   passes when the command succeeds
-check() {
-  local description=$1
-  shift
-  if "$@" >/dev/null 2>&1; then pass "$description"; else fail "$description"; fi
-}
-# expect "description" "actual" "wanted"
-expect() {
-  if [ "$2" = "$3" ]; then pass "$1"; else fail "$1: got [$2], wanted [$3]"; fi
-}
+# shellcheck source=tests/lib.sh
+source "$DOTFILES/tests/lib.sh" # pass / fail / check / expect, and the failure count
 
 echo "Config links"
 eval "$(sed -n '/^LINKS=(/,/^)/p' "$DOTFILES/install.sh")" # the LINKS list from install.sh
@@ -83,6 +69,14 @@ check "plugins are installed ($plugins)" test "$plugins" -gt 40
 for tool in lua-language-server basedpyright ruff clangd stylua tree-sitter; do
   check "Mason tool $tool" test -x "$HOME/.local/share/nvim/mason/bin/$tool"
 done
+# Mason installs some tools into Python venvs, which stop working when the system Python is upgraded
+system_python=$(python3 -c 'import sys; print(f"python{sys.version_info.major}.{sys.version_info.minor}")')
+for venv in "$HOME"/.local/share/nvim/mason/packages/*/venv; do
+  [ -d "$venv/lib" ] || continue
+  tool=$(basename "$(dirname "$venv")")
+  expect "Mason's $tool matches the system Python (if not: in Neovim, :MasonInstall --force $tool)" \
+    "$(ls "$venv/lib")" "$system_python"
+done
 parsers=$(nvim --headless "+lua io.write(table.concat(require('nvim-treesitter').get_installed(), ' '))" +qa 2>&1)
 for parser in lua python cpp bash markdown; do
   check "treesitter parser $parser" grep -qw "$parser" <<<"$parsers"
@@ -99,6 +93,21 @@ for case in "main.py basedpyright,ruff" "main.cpp clangd" "init.lua lua_ls"; do
     env EXPECT="$servers" nvim --headless "$tmp/$file" -c "luafile $DOTFILES/tests/lsp_attached.lua"
 done
 rm -rf "$tmp"
+
+# What the Neovim config's features do (its own tests: ~/.config/nvim/tests/run.sh)
+nvim_tests="$HOME/.config/nvim/tests/run.sh"
+if [ -x "$nvim_tests" ]; then
+  output=$("$nvim_tests" 2>&1)
+  sed '/^$/,$d' <<<"$output" # (without its summary line)
+  failures=$((failures + $(grep -c FAIL <<<"$output")))
+else
+  echo "Neovim features"
+  skip "your Neovim config has no tests/run.sh"
+fi
+
+# tmux's keys, and Neovim running inside tmux
+"$DOTFILES/tests/tmux_nvim.sh"
+failures=$((failures + $?))
 
 echo
 if [ "$failures" -eq 0 ]; then

@@ -57,15 +57,27 @@ you're happy.
 
 ## Testing
 
+**Does my install work?** Run `tests/check.sh` (about 20 seconds). It checks the links, tools,
+font, tmux plugins, Neovim plugins and that language servers attach, and then that the features
+work:
+
+- the Neovim config's own tests (`~/.config/nvim/tests/run.sh`, see that repo's README)
+- `tests/tmux_nvim.sh`: a hidden tmux with your `tmux.conf` and Neovim inside it. It presses
+  tmux's keys (new window, splits, Alt-h/l, tmux-fingers, ...), moves between Neovim splits and
+  tmux panes with Ctrl-h/l, and checks what Neovim draws on the screen.
+
+Everything runs in throwaway files and a separate tmux server: your sessions, saved tmux sessions,
+repos and clipboard aren't touched. A failing screen check prints what was on the screen.
+
 `tests/run.sh` runs `install.sh` twice in fresh Ubuntu 24.04 and Fedora containers (Docker), then
-runs `tests/check.sh`. That script checks the links, tools, font, tmux plugins, Neovim plugins,
-and that language servers attach. Your machine isn't touched. It takes a while, because everything
-is downloaded and built from scratch.
+runs `tests/check.sh` there. Your machine isn't touched. It takes a while, because everything is
+downloaded and built from scratch.
 
 ```bash
-tests/run.sh          # Ubuntu and Fedora
+tests/check.sh        # check this machine
+tests/tmux_nvim.sh    # only the tmux + Neovim part
+tests/run.sh          # fresh installs: Ubuntu and Fedora
 tests/run.sh fedora   # one distro
-tests/check.sh        # run the checks on this machine
 ```
 
 Logs end up in `tests/logs/`.
