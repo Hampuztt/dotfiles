@@ -164,14 +164,13 @@ mkdir -p "$repo"
   g checkout -q -b feature && echo "changed" >file.txt && g commit -qam change
 )
 nvim_cmd "only | edit $repo/file.txt"
-tm send-keys -t "$nvim_pane" Space g m
-screen_check "<Leader>gm opens the branch picker" "$nvim_pane" "Review this branch against"
-wait_shows "$nvim_pane" "2/2" # both branches are listed: the picker is ready for typing
-tm send-keys -t "$nvim_pane" master
-wait_shows "$nvim_pane" "1/2" # the list is down to master (1 of the 2 branches)
-tm send-keys -t "$nvim_pane" Enter
-screen_check "the review shows its keys on screen" "$nvim_pane" "]r [r  next/prev file"
+tm send-keys -t "$nvim_pane" Space g r
+screen_check "<Leader>gr opens the review picker" "$nvim_pane" "Review changes vs"
+wait_shows "$nvim_pane" "4/4" # both branches and both commits are listed: the picker is ready
+tm send-keys -t "$nvim_pane" Enter # master, the default branch, is selected already
+screen_check "the review shows its keys on screen" "$nvim_pane" "]e [e  next/prev change"
 screen_check "... and labels the old version" "$nvim_pane" "master, where your branch started"
+screen_check "... and your version" "$nvim_pane" "file.txt  ·  modified  ·  file 1 of 1"
 nvim --server "$tmp/nvim.sock" --remote-send '<Esc>:qa!<CR>' 2>/dev/null
 
 exit "$failures"
