@@ -63,7 +63,7 @@ work:
 
 - the Neovim config's own tests (`~/.config/nvim/tests/run.sh`, see that repo's README)
 - `tests/tmux_nvim.sh`: a hidden tmux with your `tmux.conf` and Neovim inside it. It presses
-  tmux's keys (new window, splits, Alt-h/l, tmux-fingers, ...), moves between Neovim splits and
+  tmux's keys (new window, splits, pane swapping, tmux-fingers, ...), moves between Neovim splits and
   tmux panes with Ctrl-h/l, and checks what Neovim draws on the screen.
 
 Everything runs in throwaway files and a separate tmux server: your sessions, saved tmux sessions,

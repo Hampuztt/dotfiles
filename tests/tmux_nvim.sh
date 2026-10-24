@@ -54,6 +54,7 @@ screen_check() {
   fi
 }
 press() { tm send-keys -K -c "$client" "$@"; }                     # keys through tmux's key bindings
+typed() { printf '%s' "$1" >&3; }                                     # typed <text>: raw keystrokes, as if typed into the terminal
 nvim_eval() { nvim --server "$tmp/nvim.sock" --remote-expr "$1" 2>/dev/null; }
 nvim_cmd() { nvim_eval "execute('$1')" >/dev/null; }               # runs an Ex command and waits for it
 
@@ -95,16 +96,26 @@ press C-a c
 wait_for '#{session_windows}' 2
 wait_shows test:2 'work$' # (until its shell has started, tmux can't tell which folder it's in)
 expect "prefix + c opens a new window in the current folder" "$(value '#{pane_current_path}')" "$tmp/work"
-press M-h
-wait_for '#{window_index}' 1
-expect "Alt-h goes to the previous window" "$(value '#{window_index}')" 1
-press M-l
-wait_for '#{window_index}' 2
-expect "Alt-l goes to the next window" "$(value '#{window_index}')" 2
 press C-a %
 wait_for '#{window_panes}' 2
 wait_shows test:2 'work$'
 expect "prefix + % splits the window, in the current folder" "$(value '#{window_panes} #{pane_current_path}')" "2 $tmp/work"
+# prefix + Q: the pane numbers come up with a label on each pane; pressing 1 moves this pane (2, on
+# the right) into pane 1's place, and it stays the active pane
+right_pane=$(value '#{pane_id}')
+press C-a Q
+wait_for '#{pane-border-status}' top
+expect "prefix + Q labels each pane (index, %id, program) while the pane numbers are shown" "$(value '#{pane-border-status}')" top
+typed 1 # (a raw keystroke: the pane-number prompt ignores keys sent with send-keys -K)
+wait_for '#{pane_left}' 0
+expect "... and pressing a pane's number swaps the current pane with it" "$(value '#{pane_id} #{pane_index} #{pane_left}')" "$right_pane 1 0"
+wait_for '#{pane-border-status}' off
+expect "... then the labels go away again" "$(value '#{pane-border-status}')" off
+press C-a q
+wait_for '#{pane-border-status}' top
+typed 2
+wait_for '#{pane_index}' 2
+expect "prefix + q shows the same labels, and a number jumps to that pane" "$(value '#{pane_index} #{pane-border-status}')" "2 off"
 press C-a m
 wait_for '#{pane_synchronized}' 1
 expect "prefix + m types into all panes at once" "$(value '#{pane_synchronized}')" 1
